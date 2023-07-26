@@ -5,7 +5,8 @@ from basicsr.data.data_util import paired_paths_from_folder, paired_paths_from_l
 from basicsr.data.transforms import augment, paired_random_crop
 from basicsr.utils import FileClient, bgr2ycbcr, imfrombytes, img2tensor
 from basicsr.utils.registry import DATASET_REGISTRY
-
+import mrcfile
+import numpy as np
 
 @DATASET_REGISTRY.register()
 class PairedImageDataset(data.Dataset):
@@ -69,11 +70,18 @@ class PairedImageDataset(data.Dataset):
         # Load gt and lq images. Dimension order: HWC; channel order: BGR;
         # image range: [0, 1], float32.
         gt_path = self.paths[index]['gt_path']
-        img_bytes = self.file_client.get(gt_path, 'gt')
-        img_gt = imfrombytes(img_bytes, float32=True)
+        if gt_path.endswith('.mrc'):
+            img_gt = mrcfile.open(gt_path, permissive=True).data.astype(np.float32)[:, :, np.newaxis]
+        else:
+            img_bytes = self.file_client.get(gt_path, 'gt')
+            img_gt = imfrombytes(img_bytes, float32=True)
+        
         lq_path = self.paths[index]['lq_path']
-        img_bytes = self.file_client.get(lq_path, 'lq')
-        img_lq = imfrombytes(img_bytes, float32=True)
+        if lq_path.endswith('.mrc'):
+            img_lq = mrcfile.open(lq_path, permissive=True).data.astype(np.float32)[:, :, np.newaxis]
+        else:
+            img_bytes = self.file_client.get(lq_path, 'lq')
+            img_lq = imfrombytes(img_bytes, float32=True)
 
         # augmentation for training
         if self.opt['phase'] == 'train':

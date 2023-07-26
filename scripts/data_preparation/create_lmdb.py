@@ -4,6 +4,47 @@ from os import path as osp
 from basicsr.utils import scandir
 from basicsr.utils.lmdb_util import make_lmdb_from_imgs
 
+def create_lmdb_for_empiar10028():
+    """Create lmdb files for empiar10028 dataset.
+
+    Usage:
+        Before run this script, please run `extract_subimages.py`.
+        Typically, there are four folders to be processed for empiar10028 dataset.
+
+            * empiar10028_train_HR_sub
+            * empiar10028_train_LR_lanczos_X4_sub
+
+        Remember to modify opt configurations according to your settings.
+    """    
+    
+    folder_path = 'datasets/empiar10028/train/empiar10028_train_HR_sub'
+    lmdb_path = 'datasets/empiar10028/train/empiar10028_train_HR_sub.lmdb'
+    img_path_list, keys = prepare_keys_empiar10028(folder_path)
+    make_lmdb_from_imgs(folder_path, lmdb_path, img_path_list, keys)
+    
+
+    folder_path = 'datasets/empiar10028/train/empiar10028_train_LR_lanczos_X4_sub'
+    lmdb_path = 'datasets/empiar10028/train/empiar10028_train_LR_lanczos_X4_sub.lmdb'
+    img_path_list, keys = prepare_keys_empiar10028(folder_path)
+    make_lmdb_from_imgs(folder_path, lmdb_path, img_path_list, keys)
+       
+
+def prepare_keys_empiar10028(folder_path):
+    """Prepare image path list and keys for empiar10028 dataset.
+
+    Args:
+        folder_path (str): Folder path.
+
+    Returns:
+        list[str]: Image path list.
+        list[str]: Key list.
+    """
+    print('Reading image path list ...')
+    img_path_list = sorted(list(scandir(folder_path, suffix='mrc', recursive=False)))
+    keys = [img_path.split('.mrc')[0] for img_path in sorted(img_path_list)]
+
+    return img_path_list, keys
+    
 
 def create_lmdb_for_div2k():
     """Create lmdb files for DIV2K dataset.
@@ -170,5 +211,7 @@ if __name__ == '__main__':
         create_lmdb_for_reds()
     elif dataset == 'vimeo90k':
         create_lmdb_for_vimeo90k()
+    elif dataset == 'empiar10028':
+        create_lmdb_for_empiar10028()
     else:
         raise ValueError('Wrong dataset.')
